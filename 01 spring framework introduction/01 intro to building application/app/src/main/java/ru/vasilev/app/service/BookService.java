@@ -1,12 +1,13 @@
 package ru.vasilev.app.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.vasilev.app.exception.BookIdMismatchException;
+
+import ru.vasilev.app.exception.BookNotFoundException;
 import ru.vasilev.app.model.Book;
 import ru.vasilev.app.repository.BookRepository;
-
-import java.util.List;
 
 @Service
 public class BookService {
@@ -22,8 +23,8 @@ public class BookService {
         return bookRepo.findById(id).orElse(null);
     }
 
-    public Book findByTitle(String title){
-        return bookRepo.findByTitle(title).get(0);
+    public List findByTitle(String title){
+        return bookRepo.findByTitle(title);
     }
 
     public Iterable<Book> findAll(){
@@ -34,9 +35,17 @@ public class BookService {
         return bookRepo.save(book);
     }
 
-    public Book update(Long id, Book book) throws BookIdMismatchException {
-        if(book.getId() != id){
-            throw new BookIdMismatchException();
-        }
+    public Book update(Book book, Long id) throws BookNotFoundException{
+		return bookRepo.findById(id).map(b -> {
+			b.setAuthor(book.getAuthor());
+			b.setTitle(book.getTitle());
+			return bookRepo.save(b);
+		})
+		.orElseThrow(BookNotFoundException::new);
+    }
+    
+    public void delete(Long id) throws BookNotFoundException{
+    	bookRepo.findById(id).orElseThrow(BookNotFoundException::new);
+    	bookRepo.deleteById(id);
     }
 }
